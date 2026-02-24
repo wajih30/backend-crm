@@ -1,0 +1,3 @@
+"""Lead Management & Assignment Tool Backend"""
+
+__version__ = "1.0.0"
