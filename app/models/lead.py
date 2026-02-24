@@ -8,6 +8,7 @@ from datetime import datetime
 class LeadCreate(BaseModel):
     """Schema for creating a new lead"""
     name: str
+    email: Optional[str] = None
     website: Optional[str] = None
     source: str = "manual"
     status: str = "active"
@@ -20,6 +21,7 @@ class LeadCreate(BaseModel):
 class LeadUpdate(BaseModel):
     """Schema for updating a lead"""
     name: Optional[str] = None
+    email: Optional[str] = None
     website: Optional[str] = None
     source: Optional[str] = None
     status: Optional[str] = None
@@ -51,6 +53,7 @@ class LeadResponse(BaseModel):
     """Schema for lead response"""
     id: str
     name: str
+    email: Optional[str]
     website: Optional[str]
     source: str
     status: str

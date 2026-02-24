@@ -44,3 +44,5 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str
     name: str
+    role: Optional[str] = "sdr"
+    phone: Optional[str] = None

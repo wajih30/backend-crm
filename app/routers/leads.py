@@ -122,3 +122,20 @@ async def resend_notification_email(lead_id: str, current_user: dict = Depends(r
             status_code=http_status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+@router.delete("/{lead_id}")
+async def delete_lead(lead_id: str, current_user: dict = Depends(require_sdr)):
+    """Delete lead by ID"""
+    try:
+        client = get_supabase_client()
+        # Delete related records first (since no CASCADE in schema)
+        client.table("status_history").delete().eq("lead_id", lead_id).execute()
+        client.table("notifications").delete().eq("lead_id", lead_id).execute()
+        
+        # Now delete the lead
+        client.table("leads").delete().eq("id", lead_id).execute()
+        return {"message": "Lead deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

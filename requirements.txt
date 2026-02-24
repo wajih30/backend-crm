@@ -50,4 +50,5 @@ tzdata==2025.3
 tzlocal==5.3.1
 uvicorn==0.34.0
 watchfiles==1.1.1
-websockets==15.0.1psycopg2-binary==2.9.9
+websockets==15.0.1
+psycopg2-binary==2.9.9

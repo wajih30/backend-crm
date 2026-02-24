@@ -28,6 +28,7 @@ CREATE INDEX idx_users_role ON users(role);
 CREATE TABLE IF NOT EXISTS leads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
     website VARCHAR(255),
     source VARCHAR(100) NOT NULL DEFAULT 'manual',
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'in_progress', 'not_active', 'closed', 'on_hold', 'sla_breached')),

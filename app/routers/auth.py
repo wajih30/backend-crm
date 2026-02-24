@@ -11,6 +11,9 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/register")
 async def register(user_data: UserRegisterRequest):
     """Register a new user via Supabase Auth (admin API, auto-confirmed)"""
+    auth_user_id = None
+    profile_created = False
+    
     try:
         # Service role client for admin.create_user + table insert
         admin_client = get_supabase_client()
@@ -32,15 +35,18 @@ async def register(user_data: UserRegisterRequest):
             )
         
         auth_user = auth_response.user
+        auth_user_id = str(auth_user.id)
         
         # Create profile in users table
         user_profile = admin_client.table("users").insert({
-            "id": str(auth_user.id),
+            "id": auth_user_id,
             "name": user_data.name,
             "email": user_data.email,
-            "phone": getattr(user_data, "phone", None),
-            "role": "sdr"
+            "phone": user_data.phone,
+            "role": user_data.role or "sdr"
         }).execute()
+        
+        profile_created = True
         
         # Sign in with anon client to get tokens
         anon_client = get_supabase_anon_client()
@@ -57,9 +63,20 @@ async def register(user_data: UserRegisterRequest):
             "token_type": "bearer"
         }
     
-    except HTTPException:
-        raise
     except Exception as e:
+        # Cleanup if something failed mid-way
+        if auth_user_id:
+            try:
+                admin_client = get_supabase_client()
+                if profile_created:
+                    admin_client.table("users").delete().eq("id", auth_user_id).execute()
+                admin_client.auth.admin.delete_user(auth_user_id)
+            except Exception as cleanup_err:
+                print(f"Cleanup failed for user {auth_user_id}: {cleanup_err}")
+
+        if isinstance(e, HTTPException):
+            raise e
+            
         error_msg = str(e)
         if "already been registered" in error_msg or "already exists" in error_msg:
             raise HTTPException(
