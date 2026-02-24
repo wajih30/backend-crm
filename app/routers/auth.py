@@ -10,13 +10,25 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register")
 async def register(user_data: UserRegisterRequest):
-    """Register a new user via Supabase Auth (admin API, auto-confirmed)"""
+    """Register a new user - DISABLED FOR SECURITY. Use admin endpoints to create users."""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Public registration is disabled. Contact your administrator to create an account."
+    )
+
+
+@router.post("/register-assignee")
+async def register_assignee(user_data: UserRegisterRequest):
+    """Register as an Assignee only - no role selection allowed"""
     auth_user_id = None
     profile_created = False
     
     try:
         # Service role client for admin.create_user + table insert
         admin_client = get_supabase_client()
+        
+        # Force role to assignee, ignore any role in request
+        assigned_role = "assignee"
         
         # Create user via admin API (auto-confirms email)
         auth_response = admin_client.auth.admin.create_user({
@@ -37,13 +49,12 @@ async def register(user_data: UserRegisterRequest):
         auth_user = auth_response.user
         auth_user_id = str(auth_user.id)
         
-        # Create profile in users table
+        # Create profile in users table with default assignee role
         user_profile = admin_client.table("users").insert({
             "id": auth_user_id,
             "name": user_data.name,
             "email": user_data.email,
-            "phone": user_data.phone,
-            "role": user_data.role or "sdr"
+            "role": assigned_role
         }).execute()
         
         profile_created = True
@@ -56,7 +67,7 @@ async def register(user_data: UserRegisterRequest):
         })
         
         return {
-            "message": "User registered successfully",
+            "message": "Account created successfully",
             "user": user_profile.data[0] if user_profile.data else None,
             "access_token": login_response.session.access_token if login_response.session else None,
             "refresh_token": login_response.session.refresh_token if login_response.session else None,

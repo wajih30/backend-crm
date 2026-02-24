@@ -30,9 +30,17 @@ class EmailService:
         self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
     
     async def send_assignment_email(self, lead: Dict[str, Any], assignee_id: str, max_retries: int = 3):
-        """Send assignment email to assignee"""
+        """Send assignment email to assignee
+        
+        NOTE: Data Separation
+        - lead['email'] = Lead/Customer contact email (not used for notifications)
+        - assignee's email from users table = Used for notification delivery
+        
+        The assignee notification is sent to the Assignee's profile email stored in users.email,
+        NOT the lead customer's email address.
+        """
         try:
-            # Get assignee details
+            # Get assignee details - uses the Assignee's profile email
             assignee_response = self.client.table("users").select("email, name").eq("id", assignee_id).execute()
             
             if not assignee_response.data:
@@ -53,7 +61,7 @@ class EmailService:
                 lead_url=f"{settings.app_url}/leads/{lead['id']}"
             )
             
-            # Send email with retry
+            # Send email to ASSIGNEE's profile email (from users table)
             success = await self._send_email_with_retry(
                 to_email=assignee["email"],
                 subject=subject,

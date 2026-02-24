@@ -67,10 +67,21 @@ async def create_lead(lead_data: LeadCreate, current_user: dict = Depends(requir
 
 
 @router.patch("/{lead_id}", response_model=LeadResponse)
-async def update_lead(lead_id: str, lead_data: LeadUpdate, current_user: dict = Depends(require_sdr)):
-    """Update lead by ID"""
+async def update_lead(lead_id: str, lead_data: LeadUpdate, current_user: dict = Depends(get_current_user)):
+    """Update lead by ID - SDR/Admin can update all, assignees can update own leads"""
     try:
+        # If assignee, check if they own this lead
+        if current_user.get("role") == "assignee":
+            lead = await lead_service.get_lead_details(lead_id)
+            if lead.get("assignee_id") != current_user["id"]:
+                raise HTTPException(
+                    status_code=http_status.HTTP_403_FORBIDDEN,
+                    detail="Cannot update leads assigned to others"
+                )
+        
         return await lead_service.update_lead(lead_id, lead_data, current_user["id"])
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=http_status.HTTP_400_BAD_REQUEST,

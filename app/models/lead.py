@@ -62,6 +62,7 @@ class LeadResponse(BaseModel):
     sla_deadline: Optional[datetime]
     custom_fields: Optional[Dict[str, Any]]
     assignee_id: Optional[str]
+    assignee_name: Optional[str] = "Unassigned"
     created_by: str
     created_at: datetime
     updated_at: datetime

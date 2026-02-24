@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from app.config import get_settings
 from app.services.scheduler_service import SchedulerService
-from app.routers import auth, users, leads, dashboard, audit_logs
+from app.routers import auth, users, leads, dashboard, audit_logs, admin_users, custom_fields
 
 settings = get_settings()
 scheduler_service = SchedulerService()
@@ -33,7 +33,12 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://localhost:8000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,8 +46,10 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(admin_users.router)
 app.include_router(users.router)
 app.include_router(leads.router)
+app.include_router(custom_fields.router)
 app.include_router(dashboard.router)
 app.include_router(audit_logs.router)
 
